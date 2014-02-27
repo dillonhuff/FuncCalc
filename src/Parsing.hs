@@ -15,17 +15,41 @@ data Expr
 	| FunCall FuncName [Expr]
 	| FunDef FuncName [FuncArg] Expr
 	deriving (Eq, Show)
-	
+
 pProgram :: String -> FCProgram
 pProgram str = [fst $ head $ pExpr $ programToks str]
-	
+
 pExpr :: FCParser Expr
 pExpr [] = []
 pExpr ((NumTok n):rest) = [(Num n, rest)]
 pExpr toks = pFuncall toks
 
 pFuncall :: FCParser Expr
-pFuncall = pThen makeFunCall pFID (pZeroOrMore  pExpr)
+pFuncall = pThen makeFunCall pFID (pZeroOrMore  pArg)
+
+pArg :: FCParser Expr
+pArg [] = []
+pArg ((NumTok n):rest) = [(Num n, rest)]
+pArg ((FuncTok name):rest) = [(FunCall name [], rest)]
+pArg (LParen:rest) = [(parenExpr, afterParenExpr)]
+	where
+		parenExpr = fst $ head $ pExpr $ beforeParen 1 rest
+		afterParenExpr = afterParen 1 rest
+pArg other = error ("out of options for " ++ show other)
+
+afterParen :: Int -> [FCTok] -> [FCTok]
+afterParen n (RParen:ts) = if n == 1
+	then ts
+	else afterParen (n-1) ts
+afterParen n (LParen:ts) = afterParen (n+1) ts
+afterParen n (t:ts) = afterParen n ts
+
+beforeParen :: Int -> [FCTok] -> [FCTok]
+beforeParen n (RParen:ts) = if n == 1
+	then []
+	else RParen:(beforeParen (n-1) ts)
+beforeParen n (LParen:ts) = LParen:(beforeParen (n+1) ts)
+beforeParen n (t:ts) = t:(beforeParen n ts)
 
 makeFunCall :: FuncName -> [Expr] -> Expr
 makeFunCall name args = FunCall name args
@@ -126,8 +150,8 @@ specialChar = do
 	  <|> string "-"
 	  <|> string "*"
 	return $ case spec of
-		"(" -> RParen
-		")" -> LParen
+		")" -> RParen
+		"(" -> LParen
 		"#" -> FuncStart
 		"<-" -> Assign
 		_ -> FuncTok spec
