@@ -1,13 +1,73 @@
-module Parsing() where
+module Parsing(
+	pProgram,
+	pExpr,
+	Expr(Num, FunCall, FunDef),
+	FCTok(FuncTok, NumTok, RParen, LParen, FuncStart, Assign)) where
 
 import Text.ParserCombinators.Parsec
 
-type FCProgram = [FCFunc]
-
+type FCProgram = [Expr]
 type FuncName = String
 type FuncArg = String
-type Expr = Int | 
-type FCFunc = (FuncName, Expr)
+
+data Expr
+	= Num Int
+	| FunCall FuncName [Expr]
+	| FunDef FuncName [FuncArg] Expr
+	deriving (Eq, Show)
+	
+pProgram :: String -> FCProgram
+pProgram str = [fst $ head $ pExpr $ programToks str]
+	
+pExpr :: FCParser Expr
+pExpr [] = []
+pExpr ((NumTok n):rest) = [(Num n, rest)]
+pExpr toks = pFuncall toks
+
+pFuncall :: FCParser Expr
+pFuncall = pThen makeFunCall pFID (pZeroOrMore  pExpr)
+
+makeFunCall :: FuncName -> [Expr] -> Expr
+makeFunCall name args = FunCall name args
+
+pFID :: FCParser String
+pFID ((FuncTok name):rest) = [(name, rest)]
+pFID (t:ts) = error ("function call cannot begin with " ++ show t)
+
+type FCParser a = [FCTok] -> [(a, [FCTok])]
+
+pLit :: FCTok -> FCParser FCTok
+pLit s [] = []
+pLit s (tok:toks) = if s == tok
+	then [(s, toks)]
+	else []
+
+pVar :: FCParser FCTok
+pVar [] = []
+	
+pAlt :: FCParser a -> FCParser a -> FCParser a
+pAlt p1 p2 = (\toks -> (p1 toks) ++ (p2 toks))
+
+pThen :: (a -> b -> c) -> FCParser a -> FCParser b -> FCParser c
+pThen combine p1 p2 =
+	(\toks -> [(combine v1 v2, toks2) | (v1,toks1) <- p1 toks, (v2,toks2) <- p2 toks1])
+
+pZeroOrMore :: FCParser a -> FCParser [a]
+pZeroOrMore p = (pOneOrMore p) `pAlt` (pEmpty [])
+
+pOneOrMore :: FCParser a -> FCParser [a]
+pOneOrMore p = pThen combP p (pZeroOrMore p)
+
+combP :: a -> [a] -> [a]
+combP aVal aList = aVal:aList
+
+pEmpty :: a -> FCParser a
+pEmpty t = (\input -> [(t, input)])
+
+pApply :: FCParser a -> (a -> b) -> FCParser b
+pApply p f = map (applyF f) . p
+	where
+		applyF f (v, t) = (f v, t)
 
 data FCTok
 	= FuncTok String
