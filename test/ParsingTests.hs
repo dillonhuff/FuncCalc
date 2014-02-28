@@ -28,3 +28,8 @@ pExpr_funCallParens = TestCase
 	(assertEqual "function call with parens"
 		[(FunCall "kewl" [(FunCall "n" [(Num 1), (Num 2)]), (Num 2)])]
 		(pProgram "kewl (n 1 2) 2"))
+		
+pExpr_funCallNestedParens = TestCase
+	(assertEqual "function call with nested parens"
+		[(FunCall "k" [(FunCall "n" [(Num 1), (FunCall "j" [(Num 2), (FunCall "no" [])]), (Num 1), (Num 2)])])]
+		(pProgram "k (n 1 (j 2 no)) 1 2"))
