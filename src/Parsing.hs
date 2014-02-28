@@ -22,6 +22,10 @@ pProgram str = [fst $ head $ pExpr $ programToks str]
 pExpr :: FCParser Expr
 pExpr [] = []
 pExpr ((NumTok n):rest) = [(Num n, rest)]
+pExpr (LParen:rest) = [(parenExpr, afterParenExpr)]
+	where
+		parenExpr = fst $ head $ pExpr $ beforeParen 1 rest
+		afterParenExpr = afterParen 1 rest
 pExpr toks = pFuncall toks
 
 pFuncall :: FCParser Expr
