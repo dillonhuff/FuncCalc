@@ -1,23 +1,54 @@
 module Parsing(
-	pProgram,
-	pExpr,
-	Expr(Num, FunCall, FunDef),
+	parseProgram,
+	parseExpr,
+	FuncDef(FD),
+	Expr(Num, FunCall),
 	FCTok(FuncTok, NumTok, RParen, LParen, FuncStart, Assign)) where
 
 import Text.ParserCombinators.Parsec
 
-type FCProgram = [Expr]
+type FCProgram = [FuncDef]
 type FuncName = String
 type FuncArg = String
+
+data FuncDef = FD FuncName [FuncArg] Expr
+	deriving (Eq, Show)
 
 data Expr
 	= Num Int
 	| FunCall FuncName [Expr]
-	| FunDef FuncName [FuncArg] Expr
 	deriving (Eq, Show)
 
-pProgram :: String -> FCProgram
-pProgram str = [fst $ head $ pExpr $ programToks str]
+parseProgram :: String -> FCProgram
+parseProgram str = fst $ head $ pProgram $ programToks str
+
+pProgram :: FCParser FCProgram
+pProgram = pZeroOrMore pFuncDef
+
+pFuncDef :: FCParser FuncDef
+pFuncDef = pThen makeFuncDef pFuncNameAndArgs (pThen ignoreFst (pTok Assign) pExpr)
+
+pTok :: FCTok -> FCParser FCTok
+pTok s (t:toks) = if s == t
+	then [(t, toks)]
+	else []
+pTok s [] = []
+
+makeFuncDef :: [String] -> Expr -> FuncDef
+makeFuncDef (name:args) expr = FD name args expr
+makeFuncDef _ _ = error "function definition not correcttly formed"
+		
+pFuncNameAndArgs :: FCParser [String]
+pFuncNameAndArgs = pThen ignoreFst (pTok FuncStart) (pOneOrMore pLit)
+
+appendFst :: a -> [a] -> [a]
+appendFst a aList = a:aList
+
+ignoreFst :: a -> b -> b
+ignoreFst a b = b
+
+parseExpr :: String -> Expr
+parseExpr str = fst $ head $ pExpr $ programToks str
 
 pExpr :: FCParser Expr
 pExpr [] = []
@@ -64,11 +95,11 @@ pFID (t:ts) = error ("function call cannot begin with " ++ show t)
 
 type FCParser a = [FCTok] -> [(a, [FCTok])]
 
-pLit :: FCTok -> FCParser FCTok
-pLit s [] = []
-pLit s (tok:toks) = if s == tok
-	then [(s, toks)]
-	else []
+pLit :: FCParser String
+pLit [] = []
+pLit (tok:toks) = case tok of
+	(FuncTok name) -> [(name, toks)]
+	_ -> []
 
 pVar :: FCParser FCTok
 pVar [] = []
