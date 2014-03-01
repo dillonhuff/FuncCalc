@@ -48,3 +48,9 @@ parseProgram_nestedFunc = TestCase
 			(FunCall "oooh"
 				[(FunCall "no" []), (Num 45), (FunCall "how" [(FunCall "a" [])])])]
 		(parseProgram "# g a how <- oooh no 45 (how a)"))
+		
+parseProgram_multipleFuncs = TestCase
+	(assertEqual "more than one function"
+		[(FD "g" ["tw"] (FunCall "tw" [(Num 2)])),
+		 (FD "second" [] (Num 3))]
+		(parseProgram "# g tw <- tw 2# second <- 3"))
