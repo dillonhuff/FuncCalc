@@ -64,14 +64,13 @@ pFuncall :: FCParser Expr
 pFuncall = pThen makeFunCall pFID (pZeroOrMore  pArg)
 
 pArg :: FCParser Expr
-pArg [] = []
 pArg ((NumTok n):rest) = [(Num n, rest)]
 pArg ((FuncTok name):rest) = [(FunCall name [], rest)]
 pArg (LParen:rest) = [(parenExpr, afterParenExpr)]
 	where
 		parenExpr = fst $ head $ pExpr $ beforeParen 1 rest
 		afterParenExpr = afterParen 1 rest
-pArg other = error ("out of options for " ++ show other)
+pArg _ = []
 
 afterParen :: Int -> [FCTok] -> [FCTok]
 afterParen n (RParen:ts) = if n == 1

@@ -1,4 +1,5 @@
-module TemplateInstantiator() where
+module TemplateInstantiator(
+	compile) where
 
 import Data.List
 import ApplicativeForm

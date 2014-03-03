@@ -12,7 +12,9 @@ tests = TestList [
 	parseExpr_funCallParens,
 	parseExpr_funCallNestedParens,
 	parseProgram_funcNum,
-	parseProgram_nestedFunc]
+	parseProgram_nestedFunc,
+	parseProgram_zeroArgFunc,
+	parseProgram_multipleFuncs]
 
 parseExpr_num = TestCase
 	(assertEqual "number" (Num 12) (parseExpr "12"))
@@ -48,6 +50,11 @@ parseProgram_nestedFunc = TestCase
 			(FunCall "oooh"
 				[(FunCall "no" []), (Num 45), (FunCall "how" [(FunCall "a" [])])])]
 		(parseProgram "# g a how <- oooh no 45 (how a)"))
+		
+parseProgram_zeroArgFunc = TestCase
+	(assertEqual "zero arg function"
+		[(FD "main" [] (Num 12))]
+		(parseProgram "# main <- 12"))
 		
 parseProgram_multipleFuncs = TestCase
 	(assertEqual "more than one function"

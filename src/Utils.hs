@@ -3,7 +3,7 @@ module Utils(
 	Addr, showAddr,
 	Name,
 	Node(NAp, NSup, NNum),
-	hLookup, hAlloc) where
+	hLookup, hAlloc, initialHeap) where
 	
 import ApplicativeForm
 import Parsing
@@ -26,6 +26,7 @@ data Node
 	= NAp Addr Addr
 	| NSup Name [Name] AExpr
 	| NNum Int
+	deriving (Eq, Show)
 
 type Heap a = (Int, [Int], [(Int, a)])
 

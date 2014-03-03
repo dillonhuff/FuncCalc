@@ -1,4 +1,5 @@
 module ApplicativeForm(
+	makeProgram,
 	Program, SCDef(SC),
 	AExpr(AAp, ANum, AFun),
 	toApForm) where
