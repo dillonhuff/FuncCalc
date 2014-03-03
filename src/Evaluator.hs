@@ -3,6 +3,7 @@ module Evaluator() where
 import ApplicativeForm
 import Utils
 
+eval :: TiState -> [TiState]
 eval state = state : restStates
 	where
 		restStates | tiFinal state = []
@@ -51,3 +52,7 @@ getarg heap addr = arg
 		
 instantiate :: AExpr -> TiHeap -> [(Name, Addr)] -> (TiHeap, Addr)
 instantiate (ANum n) heap env = hAlloc heap (NNum n)
+instantiate (AAp e1 e2) heap env = hAlloc heap2 (NAp a1 a2)
+	where
+		(heap1, a1) = instantiate e1 heap env
+		(heap2, a2) = instantiate e2 heap1 env
