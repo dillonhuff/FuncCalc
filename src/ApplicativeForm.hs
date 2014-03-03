@@ -1,5 +1,5 @@
 module ApplicativeForm(
-	Program,
+	Program, SCDef(SC),
 	AExpr(AAp, ANum, AFun),
 	toApForm) where
 
@@ -7,6 +7,7 @@ import Parsing
 
 type Program = [SCDef]
 data SCDef = SC String [String] AExpr
+	deriving (Eq, Show)
 
 data AExpr
 	= AAp AExpr AExpr

@@ -1,11 +1,14 @@
 module TemplateInstantiator() where
 
+import Data.List
 import ApplicativeForm
 
 compile :: Program -> TiState
-compile program = (initialStack, initialHeap, globals)
+compile program = (initialStack, initHeap, globals)
 	where
-		initialStack = addressOfMain
+		scDefs = program
+		(initHeap, globals) = initialHeap scDefs
+		initialStack = [addressOfMain]
 		addressOfMain = case lookup "main" globals of
 			Just mAddr -> mAddr
 			Nothing -> error "No address for main"
@@ -29,6 +32,15 @@ data Node
 	| NNum Int
 
 type Heap a = (Int, [Int], [(Int, a)])
+
+initialHeap :: [SCDef] -> (TiHeap, TiGlobals)
+initialHeap scDefs = mapAccumL allocateSc hInitial scDefs
+
+allocateSc :: TiHeap -> SCDef -> (TiHeap, (Name, Addr))
+allocateSc heap (SC name args body) = 
+	(newHeap, (name, addr))
+	where
+		(newHeap, addr) = hAlloc heap (NSup name args body)
 
 hInitial :: Heap a
 hInitial = (0, [1..], [])
