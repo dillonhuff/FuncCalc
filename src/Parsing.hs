@@ -1,6 +1,7 @@
 module Parsing(
 	parseProgram,
 	parseExpr,
+	FCProgram,
 	FuncDef(FD),
 	Expr(Num, FunCall),
 	FCTok(FuncTok, NumTok, RParen, LParen, FuncStart, Assign)) where
